@@ -1,7 +1,7 @@
 from settings import String as string
 from dataclasses import dataclass
 from telebot import TeleBot
-import db_connector
+import db_controller
 import logging
 
 logging.basicConfig(filename='error.log',
@@ -10,7 +10,7 @@ logging.basicConfig(filename='error.log',
 
 bot = TeleBot(string.API_KEY)
 chats = {}
-db=db_connector.Database()
+db=db_controller.Database()
 @dataclass()
 class State:
     HOME = string.btn_home
@@ -43,6 +43,7 @@ class Cart:
         self.id = id
 
     def get_cart_item(self):
+        ...
 
 
     def clear_cart(self):

@@ -27,18 +27,21 @@ class User(Base):
     type = Column(String)
 
 
+
 class Cart(Base):
     __tablename__ = 'cart'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    uid = Column(Integer)
-
+    uid = Column(Integer, ForeignKey("user.id"))
+    cartforuser = relationship("User",backref="carts")
 
 class CartItems(Base):
     __tablename__ = 'cart_items'
     id = Column(Integer, primary_key=True, autoincrement=True)
     item = Column(ForeignKey('item.id', ondelete='CASCADE'), nullable=False, index=True)
     cart = Column(ForeignKey('cart.id', ondelete='CASCADE'), nullable=False, index=True)
+    items = relationship("Item", backref="items")
+    carts = relationship("Cart", backref="cart")
 
 
 class Database():
@@ -61,6 +64,10 @@ class Database():
     def delete(self, table, filter: list, values: dict):
         self.session.query(table).filter(*filter).delete()
         self.session.commit()
+
+da=Database()
+a=da.session.query(User).all()[0]
+print(da.session.query(User).all()[0])
 
 
 
