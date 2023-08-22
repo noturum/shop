@@ -9,6 +9,7 @@ class String:
     btn_cart:str='Корзина'
     btn_item:str='Каталог'
     sqlite='sqlite:///data.db'
+    text_home:str='Home '
 
 def get_dict(cls):
     return dataclasses.asdict(cls)

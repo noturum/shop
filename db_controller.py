@@ -1,5 +1,5 @@
 # todo: check errors
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, select
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, insert, select
 from sqlalchemy.orm import Session, DeclarativeBase, relationship
 from sqlalchemy.orm import mapped_column
 import settings
@@ -15,8 +15,9 @@ class Item(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
     description = Column(String)
-    coutn = Column(Integer)
-
+    count = Column(Integer)
+    def __repr__(self):
+        return f'{self.name}\n{self.description}'
 
 class User(Base):
     __tablename__ = 'user'
@@ -40,8 +41,16 @@ class CartItems(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     item = Column(ForeignKey('item.id', ondelete='CASCADE'), nullable=False, index=True)
     cart = Column(ForeignKey('cart.id', ondelete='CASCADE'), nullable=False, index=True)
+    count= Column(Integer)
     items = relationship("Item", backref="items")
     carts = relationship("Cart", backref="cart")
+
+class Order(Base):
+    __tablename__ = 'order'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    uid = Column(ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    cart = Column(ForeignKey('cart.id', ondelete='CASCADE'), nullable=False, index=True)
 
 
 class Database():
@@ -50,6 +59,21 @@ class Database():
         self.session = Session(self.__engine)
         Base.metadata.create_all(self.__engine)
 
+    def get_cart_id(self,uid):
+        if id:=self.session.execute(select(Cart).filter(User.uid==uid)).fetchone():
+            return id
+        else:
+            return self.session.execute(self.insert(Cart,Cart.id,uid=uid)).fetchone()
+    def insert(self,table,returning=None,**values):
+        if returning:
+            returns=self.session.execute(insert(table).values(**values).returning(returning)).fetchone()
+            self.session.commit()
+            return returns
+        else:
+            self.session.execute(insert(table).values(**values))
+
+    def update(self, table, where, values):
+        ...
     def update(self, table, filter: list, values: dict):
         self.session.query(table).filter(*filter).update(values)
         self.session.commit()
@@ -66,8 +90,5 @@ class Database():
         self.session.commit()
 
 da=Database()
-a=da.session.query(User).all()[0]
-print(da.session.query(User).all()[0])
-
-
-
+select(User).ex
+print(da.insert(User,User.id,name='sds',type='wewe'))

@@ -27,10 +27,10 @@ class Keyboard:
                       InlineKeyboardButton(text=f'{val}', callback_data='chenge_count'),
                       InlineKeyboardButton(text=f'+', callback_data='counter_inc')))
         return self
-    def add_item(self):
-        self.add_btn((InlineKeyboardButton(text=f'+', callback_data='add_item'),))
+    def add_item(self,ind):
+        self.add_btn((InlineKeyboardButton(text=f'+', callback_data=f'add_item@{ind}'),))
         return self
-    def delete_item(self):
+    def delete_item(self,ind):
         self.add_btn((InlineKeyboardButton(text=f'Удалить', callback_data='delete_item'),))
         return self
     def add_btn(self, func):

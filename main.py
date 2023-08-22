@@ -1,7 +1,8 @@
 from settings import String as string
 from dataclasses import dataclass
 from telebot import TeleBot
-import db_controller
+from db_controller import User,Cart,Item,CartItems,Database
+import keyboard as buttons
 import logging
 
 logging.basicConfig(filename='error.log',
@@ -10,7 +11,9 @@ logging.basicConfig(filename='error.log',
 
 bot = TeleBot(string.API_KEY)
 chats = {}
-db=db_controller.Database()
+db = Database()
+
+
 @dataclass()
 class State:
     HOME = string.btn_home
@@ -18,86 +21,97 @@ class State:
     CART = string.btn_cart
 
 
-
 class Message:
-    def __init__(self, text, keyboard=None):
+    def __init__(self, text, keyboard=None,item=None):
         self.__msg = None
-        self.text=text
-        self.keyboard=keyboard
+        self.text = text
+        self.id=None
+        self.keyboard = keyboard
 
-    def send_message(self,chat_id):
-        self.__msg=bot.send_message(chat_id=chat_id,text=self.text,reply_markup=self.keyboard)
+    def send_message(self, chat_id):
+        self.__msg = bot.send_message(chat_id=chat_id, text=self.text, reply_markup=self.keyboard)
 
     def delete_message(self):
-        bot.delete_message(self.__msg.chat.id,self.__msg.id)
+        bot.delete_message(self.__msg.chat.id, self.__msg.id)
 
     def edit_message(self, text=None, keyboard=None):
         if text:
-            bot.edit_message_text(text,self.__msg.chat.id,self.__msg.id)
+            bot.edit_message_text(text, self.__msg.chat.id, self.__msg.id)
         if keyboard:
-            bot.edit_message_reply_markup(self.__msg.chat.id,self.__msg.id,reply_markup=keyboard)
-
-
-class Cart:
-    def __init__(self, id):
-        self.id = id
-
-    def get_cart_item(self):
-        ...
-
-
-    def clear_cart(self):
-        ...
+            bot.edit_message_reply_markup(self.__msg.chat.id, self.__msg.id, reply_markup=keyboard)
 
 
 class Chat:
     def __init__(self, id):
         self.__state = State.HOME
-        self.__id = id
-        self.__type = self.get_type(id)
         self.__messages = []
-        self.__cart = self.get_cart()
+        self.__select_item=None
 
-    def get_type(self):
-        ...
+    def get_user(self,id):
+        return db.select(User,[User.chat_id==id],one=True)
+    def get_message(self,all=True):
+        if all:
+            return self.__messages
+        else:
+            for msg in self.__messages:
+                if msg.id==all:
+                    return msg
+
 
     def add_message(self, msg: Message):
-        ...
-
+        msg.id=len(self.__messages)
+        msg.send_message()
+        self.__messages.append(msg)
     def claer_chat(self):
-        ...
-
-    def get_cart(self):
-        return Cart(self.id).get_cart_item()
+        for msg in self.__messages:
+            msg.delete_message
+        self.__messages.clear()
 
     def set_state(self, state):
-        ...
+        self.claer_chat()
+        self.__state=state
+    def select_item(self,id):
+        self.__select_item=id
 
 
-def init(id):
-    ...
-
+def init(message):
+    if db.select(User,[User.chat_id==id],True):
+        db.session.add(User(chat_id=message.chat.id,name=message.from_user.username,type='user'))
+        db.session.commit()
+    chats[message.chat.id]=Chat(message.chat.id)
 
 def main():
     @bot.message_handler(content_types=['text'])
     def point(message):
-        # todo: delete message from user
-        if message.chat.id in chats:
-            init(message.chat.id)
+        bot.delete_message(message.chat.id,message.id)
+        if message.chat.id not in chats:
+            init(message)
         match message.text:
             case State.HOME | '/start':
                 chats[message.chat.id].set_state(State.HOME)
-                ...
+                chats[message.chat.id].add_message(Message(string.text_home, buttons.Keyboard().main(2).get_keyboard()))
             case State.ITEMS:
+                chats[message.chat.id].set_state(State.ITEM)
+                if len(items:=db.select(Item))>0:
+                    for item in items:
+                        keyboard=buttons.Keyboard(buttons.Keyboard.INLINE)
+                        keyboard.add_btn(keyboard.add_item(len(chats[message.chat.id].get_message())))
+                        chats[message.chat.id].add_message(Message(item,keyboard.get_keyboard()))
                 ...
             case State.CART:
+                chats[message.chat.id].set_state(State.CART)
+                chats[message.chat.id].get_user()
                 ...
             case _:
                 ...
 
     @bot.callback_query_handler(func=lambda call: call.data.find('counter_dec') == 0)
     def counter_dec(call):
-        ...
+        id_msg = int(call.data.split('@')[1])
+        item_id = chats[call.message.chat.id].get_message(id_msg).item.id
+        #todo: logics inc count item on cart
+
+
 
     @bot.callback_query_handler(func=lambda call: call.data.find('counter_inc') == 0)
     def counter_inc(call):
@@ -109,11 +123,17 @@ def main():
 
     @bot.callback_query_handler(func=lambda call: call.data.find('add_item') == 0)
     def add_item(call):
+        id_msg=int(call.data.split('@')[1])
+        (msg:=chats[call.message.chat.id].get_message(id_msg)).edit_message(keyboard=buttons.add_btn(buttons.counter(1)))
+        db.insert(CartItems,item=msg.item.id,cart=db.get_cart(call.message.chat.id))
+        #todo: try use relation
+
         ...
 
     @bot.callback_query_handler(func=lambda call: call.data.find('delete_item') == 0)
     def delete_item(call):
         ...
+
     bot.polling(none_stop=True)
 
 
