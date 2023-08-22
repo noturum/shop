@@ -26,31 +26,20 @@ class User(Base):
     chat_id = Column(Integer)
     name = Column(String)
     type = Column(String)
+    items = relationship("UserCart")
 
 
 
-class Cart(Base):
-    __tablename__ = 'cart'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    uid = Column(Integer, ForeignKey("user.id"))
-    cartforuser = relationship("User",backref="carts")
 
-class CartItems(Base):
-    __tablename__ = 'cart_items'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    item = Column(ForeignKey('item.id', ondelete='CASCADE'), nullable=False, index=True)
-    cart = Column(ForeignKey('cart.id', ondelete='CASCADE'), nullable=False, index=True)
-    count= Column(Integer)
-    items = relationship("Item", backref="items")
-    carts = relationship("Cart", backref="cart")
-
-class Order(Base):
-    __tablename__ = 'order'
-
+class UserCart(Base):
+    __tablename__ = 'user_cart'
     id = Column(Integer, primary_key=True, autoincrement=True)
     uid = Column(ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    cart = Column(ForeignKey('cart.id', ondelete='CASCADE'), nullable=False, index=True)
+    item = Column(ForeignKey('item.id', ondelete='CASCADE'), nullable=False, index=True)
+
+
+
 
 
 class Database():
@@ -58,12 +47,6 @@ class Database():
         self.__engine = create_engine(settings.String.sqlite, echo=True)
         self.session = Session(self.__engine)
         Base.metadata.create_all(self.__engine)
-
-    def get_cart_id(self,uid):
-        if id:=self.session.execute(select(Cart).filter(User.uid==uid)).fetchone():
-            return id
-        else:
-            return self.session.execute(self.insert(Cart,Cart.id,uid=uid)).fetchone()
     def insert(self,table,returning=None,**values):
         if returning:
             returns=self.session.execute(insert(table).values(**values).returning(returning)).fetchone()
@@ -71,6 +54,8 @@ class Database():
             return returns
         else:
             self.session.execute(insert(table).values(**values))
+            self.session.commit()
+
 
     def update(self, table, where, values):
         ...
@@ -78,7 +63,7 @@ class Database():
         self.session.query(table).filter(*filter).update(values)
         self.session.commit()
 
-    def select(self, table, filter=True, count=False, one=False):
+    def select(self, table, filter=(True,), count=False, one=False):
         if count:
             return self.session.query(table).filter(filter).count()
         else:
@@ -89,6 +74,5 @@ class Database():
         self.session.query(table).filter(*filter).delete()
         self.session.commit()
 
-da=Database()
-select(User).ex
-print(da.insert(User,User.id,name='sds',type='wewe'))
+
+
