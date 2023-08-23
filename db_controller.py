@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, inser
 from sqlalchemy.orm import Session, DeclarativeBase, relationship
 from sqlalchemy.orm import mapped_column
 
-from settings import String
+from settings import String as string
 
 class Base(DeclarativeBase):
     ...
@@ -45,7 +45,7 @@ class UserCart(Base):
 
 class Database():
     def __init__(self):
-        self.__engine = create_engine(String.sqlite, echo=True)
+        self.__engine = create_engine(string.sqlite, echo=True)
         self.session = Session(self.__engine)
         Base.metadata.create_all(self.__engine)
     def insert(self,table,returning=None,**values):
@@ -65,10 +65,10 @@ class Database():
 
     def select(self, table, filter=(True,), count=False, one=False):
         if count:
-            return self.session.query(table).filter(filter).count()
+            return self.session.query(table).filter(*filter).count()
         else:
             return self.session.query(table).filter(*filter).one() if one else self.session.query(table).filter(
-                filter).all()
+                *filter).all()
 
     def delete(self, table, filter: list,returning=None ):
         if returning:

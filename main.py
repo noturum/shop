@@ -50,8 +50,8 @@ class Chat:
         self.__messages = []
         self.selected_item = None
 
-    def get_user(self, id):
-        return db.select(User, [User.chat_id == id], one=True)[0]
+    def get_user(self):
+        return db.select(User, [User.chat_id == self.__id], one=True)
 
     def get_message(self, all=True):
         if all:
@@ -83,9 +83,9 @@ class Chat:
 
 
 def init(message):
-    if db.select(User, [User.chat_id == id], True):
-        db.session.add(User(chat_id=message.chat.id, name=message.from_user.username, type='user'))
-        db.session.commit()
+    if len(db.select(User, [User.chat_id == message.chat.id,]))==0:
+        db.insert(User,chat_id=message.chat.id, name=message.from_user.username, type='user')
+
     chats[message.chat.id] = Chat(message.chat.id)
 
 
@@ -93,13 +93,14 @@ def main():
     @bot.message_handler(content_types=['text'])
     def point(message):
         bot.delete_message(message.chat.id, message.id)
-        chat = chats[message.chat.id]
+
         if message.chat.id not in chats:
             init(message)
+        chat = chats[message.chat.id]
         match message.text:
             case State.HOME | '/start':
                 chat.set_state(State.HOME)
-                chat.add_message(Message(string.text_home, buttons().main(2).get_keyboard()))
+                chat.add_message(Message(string.text_home, buttons(buttons.REPLY).main(2).get_keyboard()))
             case State.ITEMS:
                 chat.set_state(State.ITEMS)
                 if len(items := db.select(Item)) > 0:
@@ -117,7 +118,7 @@ def main():
                 if len(items := chat.get_user().items) > 0:
                     for item in items:
                         keyboard = buttons(buttons.INLINE)
-                        keyboard.counter(item.count).delete_item(len(chat.get_message(True)))
+                        keyboard.counter(item.count,id_msg:=len(chat.get_message(True)).delete_item(id_msg))
 
                         chat.add_message(Message(str(item), keyboard.get_keyboard(), item))
                 ...
@@ -131,7 +132,7 @@ def main():
                             db.update(UserCart, [UserCart.uid == message.chat.id, UserCart.item == item],
                                       {'count': int(message.text)})
                             keyboard = buttons(buttons.INLINE)
-                            keyboard.counter(int(message.text))
+                            keyboard.counter(int(message.text),chat.selected_item)
                             msg.edit_message(keyboard=keyboard.get_keyboard())
 
     @bot.callback_query_handler(func=lambda call: call.data.find('counter_dec') == 0)
@@ -161,7 +162,7 @@ def main():
                       {'count': UserCart.count + 1})
             db.update(Item, [Item.id == msg.item.id, ], {'count': Item.count - 1})
             keyboard = buttons(buttons.INLINE)
-            keyboard.counter(count + 1)
+            keyboard.counter(count + 1,id_msg)
             msg.edit_message(keyboard=keyboard.get_keyboard())
         else:
             bot.answer_callback_query(call.id, f'Товар кончился', show_alert=True)
@@ -181,7 +182,7 @@ def main():
         msg = chats[call.message.chat.id].get_message(id_msg)
         if db.is_available_items(msg.item.id, 1):
             keyboard = buttons(buttons.INLINE)
-            keyboard.counter(1)
+            keyboard.counter(1,id_msg)
 
             msg.edit_message(
                 keyboard=keyboard.get_keyboard())

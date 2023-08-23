@@ -19,14 +19,14 @@ class Keyboard:
                 else:
                     self.__add_btn(row)
                     row=[btn[1]]
-        self.add_btn(row)
+        self.__add_btn(row)
 
         return self
 
-    def counter(self, val):
-        self.add_btn((InlineKeyboardButton(text=f'-', callback_data='counter_dec'),
-                      InlineKeyboardButton(text=f'{val}', callback_data='chenge_count'),
-                      InlineKeyboardButton(text=f'+', callback_data='counter_inc')))
+    def counter(self, val,ind):
+        self.__add_btn((InlineKeyboardButton(text=f'-', callback_data=f'counter_dec@{ind}'),
+                      InlineKeyboardButton(text=f'{val}', callback_data=f'chenge_count@{ind}'),
+                      InlineKeyboardButton(text=f'+', callback_data=f'counter_inc@{ind}')))
         return self
     def add_item(self,ind):
         self.__add_btn((InlineKeyboardButton(text=f'+', callback_data=f'add_item@{ind}'),))

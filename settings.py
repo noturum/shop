@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class String:
-    API_KEY:str=''
+    API_KEY:str='2113467244:AAFSOi8Dj1INRWLBEIuuFwuOqkwYhtJoHL0'
     chg_count='chg_count'
     btn_home:str='На главную'
     btn_cart:str='Корзина'
