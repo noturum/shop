@@ -17,9 +17,10 @@ class Keyboard:
                 if len(row) < row_width:
                     row.append(btn[1])
                 else:
-                    self.add_btn(row)
+                    self.__add_btn(row)
                     row=[btn[1]]
         self.add_btn(row)
+
         return self
 
     def counter(self, val):
@@ -28,13 +29,16 @@ class Keyboard:
                       InlineKeyboardButton(text=f'+', callback_data='counter_inc')))
         return self
     def add_item(self,ind):
-        self.add_btn((InlineKeyboardButton(text=f'+', callback_data=f'add_item@{ind}'),))
+        self.__add_btn((InlineKeyboardButton(text=f'+', callback_data=f'add_item@{ind}'),))
         return self
     def delete_item(self,ind):
-        self.add_btn((InlineKeyboardButton(text=f'Удалить', callback_data='delete_item'),))
+        self.__add_btn((InlineKeyboardButton(text=f'Удалить', callback_data='delete_item'),))
         return self
-    def add_btn(self, func):
+    def __add_btn(self, func):
         self.__keyboard.add(*func)
 
     def get_keyboard(self):
         return self.__keyboard
+
+    def needed(self):
+        pass
